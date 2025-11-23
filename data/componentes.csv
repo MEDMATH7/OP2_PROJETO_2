@@ -1,1 +1,6 @@
-.
+indice,codigo_prof,nome,Tb,MM,alpha_ref,dens_liq,dens_vap,viscosidade,tensao_superficial
+1,5,n-pentano,,,,,,,
+2,6,n-hexano,,,,,,,
+3,7,n-heptano,,,,,,,
+4,9,n-nonano,,,,,,,
+5,10,n-decano,,,,,,,
