@@ -9,6 +9,7 @@ from componentes import carregar_componentes
 from especificacao import definir_especificacao_por_recuperacoes
 from fug import fenske_Nmin, underwood_RRmin, gilliland_N
 from eficiencia import estimar_mu_feed_cP, oconnell_eta, calcular_N_real
+from dimensionamento_pratos import dimensionar_coluna_pratos
 
 
 def definir_alimentacao():
@@ -134,6 +135,42 @@ def main():
     import math
     N_pratos = math.ceil(N_real)
     print(f"Número de pratos de projeto (arredondado para cima): N_pratos = {N_pratos}")
+    
+    # 6) DIMENSIONAMENTO DA COLUNA DE PRATOS VÁLVULADOS
+    print("\n=== ETAPA 6 – DIMENSIONAMENTO DA COLUNA DE PRATOS VÁLVULADOS ===")
+
+    sizing = dimensionar_coluna_pratos(
+        N_pratos=N_pratos,
+        F=F,
+        q_liq=q_liq,
+        spec=spec,
+        RR=RR,
+        comps=comps,
+        P_atm=P,
+    )
+
+    print(f"Diâmetro da coluna (adotado) ≈ {sizing.diametro:.2f} m")
+    print(f"Altura ativa (entre pratos) ≈ {sizing.H_ativa:.1f} m")
+    print(f"Altura total estimada ≈ {sizing.H_total:.1f} m")
+
+    print("\n--- Seção de Topo ---")
+    st = sizing.sec_topo
+    print(f"V_topo = {st.V_kmol_h:.1f} kmol/h")
+    print(f"MW_vap_topo ≈ {st.MW_vap:.1f} kg/kmol")
+    print(f"rho_vap_topo ≈ {st.rho_vap:.2f} kg/m3")
+    print(f"u_flood_topo ≈ {st.u_flood:.2f} m/s")
+    print(f"u_op_topo ≈ {st.u_op:.2f} m/s")
+    print(f"D_topo (se isolado) ≈ {st.D:.2f} m")
+
+    print("\n--- Seção de Fundo ---")
+    sf = sizing.sec_fundo
+    print(f"V_fundo = {sf.V_kmol_h:.1f} kmol/h")
+    print(f"MW_vap_fundo ≈ {sf.MW_vap:.1f} kg/kmol")
+    print(f"rho_vap_fundo ≈ {sf.rho_vap:.2f} kg/m3")
+    print(f"u_flood_fundo ≈ {sf.u_flood:.2f} m/s")
+    print(f"u_op_fundo ≈ {sf.u_op:.2f} m/s")
+    print(f"D_fundo (se isolado) ≈ {sf.D:.2f} m")
+
 
 
 
