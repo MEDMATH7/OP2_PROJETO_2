@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -11,21 +10,21 @@ import pandas as pd
 @dataclass
 class Componente:
     indice: int               # 1..5 (1 = mais volátil, 5 = menos volátil)
-    codigo_prof: int          # 5, 6, 7, 9, 10 (códigos do My_settings)
+    codigo_prof: int          # 5, 6, 7, 9, 10 
     nome: str
-    Tb: float | None = None              # ponto de ebulição (K ou °C – decidimos depois)
+    Tb: float | None = None              # ponto de ebulição 
     MM: float | None = None              # kg/kmol
     alpha_ref: float | None = None       # volatilidade relativa
     dens_liq: float | None = None        # kg/m3
     dens_vap: float | None = None        # kg/m3
     viscosidade: float | None = None     # cP
-    tensao_superficial: float | None = None  # mN/m ou dyn/cm
+    tensao_superficial: float | None = None  
 
 
 def carregar_componentes(caminho_csv: str | Path) -> List[Componente]:
     """
     Lê o arquivo componentes.csv e retorna uma lista de Componente
-    ordenada do mais volátil para o menos volátil (indice crescente).
+    ordenada do mais volátil para o menos volátil
     """
     caminho_csv = Path(caminho_csv)
     df = pd.read_csv(caminho_csv)
@@ -47,7 +46,7 @@ def carregar_componentes(caminho_csv: str | Path) -> List[Componente]:
             )
         )
 
-    # Ordena pela ordem física do problema (1..5) – C5 -> C10
+    # Ordena C5 -> C10
     comps.sort(key=lambda c: c.indice)
 
     return comps

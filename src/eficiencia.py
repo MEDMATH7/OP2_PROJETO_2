@@ -1,4 +1,4 @@
-# src/eficiencia.py
+
 from __future__ import annotations
 
 from typing import Sequence
@@ -7,17 +7,12 @@ import numpy as np
 
 
 def estimar_mu_feed_cP(zF: Sequence[float]) -> float:
-    """
-    Estima a viscosidade da alimentação (μ_F) em cP por média molar,
-    usando valores típicos a ~25 °C para n-parafinas C5–C10.
 
-    Ordem dos componentes: [n-C5, n-C6, n-C7, n-C9, n-C10]
-    """
     zF_arr = np.asarray(zF, dtype=float)
     if zF_arr.shape[0] != 5:
         raise ValueError("zF deve ter 5 componentes (n-C5, n-C6, n-C7, n-C9, n-C10).")
 
-    # viscosidades em cP a ~25 °C (ordem de grandeza, literatura)
+    # viscosidades em cP a 25 graus (ordem de grandeza, literatura)
     mu_cP = np.array([0.224, 0.295, 0.389, 0.665, 0.850], dtype=float)
 
     mu_mix = float(np.dot(zF_arr, mu_cP))
@@ -25,14 +20,7 @@ def estimar_mu_feed_cP(zF: Sequence[float]) -> float:
 
 
 def oconnell_eta(alpha_rel: float, mu_F_cP: float) -> float:
-    """
-    Correlação clássica de O'Connell para eficiência global (fração):
 
-        η_G = 0.492 * (alpha_rel * mu_F_cP)**(-0.245)
-
-    alpha_rel: volatilidade relativa "chave" (por ex. LK/HK)
-    mu_F_cP : viscosidade da alimentação em cP
-    """
     alpha_mu = alpha_rel * mu_F_cP
     if alpha_mu <= 0:
         raise ValueError("alpha_rel * mu_F_cP deve ser > 0.")
@@ -42,12 +30,7 @@ def oconnell_eta(alpha_rel: float, mu_F_cP: float) -> float:
 
 
 def calcular_N_real(N_teorico: float, eta_G: float) -> float:
-    """
-    Converte número de estágios teóricos (N_teorico) em número de estágios reais,
-    usando a definição:
 
-        η_G = N_teorico / N_real   =>   N_real = N_teorico / η_G
-    """
     if eta_G <= 0:
         raise ValueError("eta_G deve ser > 0.")
     return float(N_teorico / eta_G)

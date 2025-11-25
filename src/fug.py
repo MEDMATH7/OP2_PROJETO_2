@@ -1,4 +1,3 @@
-# src/fug.py
 from __future__ import annotations
 
 from typing import Sequence, Tuple
@@ -13,14 +12,7 @@ def fenske_Nmin(
     i_HK: int,
     alpha: Sequence[float],
 ) -> float:
-    """
-    Calcula N_min pelo método de Fenske (Classe I, α constantes).
 
-    xD, xB: composições de topo e fundo (listas ou arrays)
-    i_LK, i_HK: índices (0..n-1) da light key e heavy key
-    alpha: volatilidades relativas em relação a um componente de referência
-           (no nosso caso: [C5, C6, C7, C9, C10] = [3.0, 2.3, 1.8, 1.3, 1.0])
-    """
     xD = np.asarray(xD, dtype=float)
     xB = np.asarray(xB, dtype=float)
     alpha = np.asarray(alpha, dtype=float)
@@ -34,8 +26,8 @@ def fenske_Nmin(
 
 def _underwood_balance(theta: float, alpha: np.ndarray, zF: np.ndarray, q_liq: float) -> float:
     """
-    Função f(θ) da equação de Underwood:
-        sum( α_i z_F,i / (α_i - θ) ) = 1 - q_liq
+    Funçãoda equação de Underwood:
+
     """
     return np.sum(alpha * zF / (alpha - theta)) - (1.0 - q_liq)
 
@@ -50,8 +42,7 @@ def solve_underwood_theta(
     max_iter: int = 100,
 ) -> float:
     """
-    Resolve θ pela equação de Underwood usando bissecção.
-    θ deve estar entre α_HK e α_LK.
+    Resolve pela equação de Underwood usando bissecção.
     """
     alpha = np.asarray(alpha, dtype=float)
     zF = np.asarray(zF, dtype=float)
@@ -93,7 +84,7 @@ def underwood_RRmin(
 ) -> Tuple[float, float]:
     """
     Calcula a razão de refluxo mínima R_R,min por Underwood
-    e devolve também o θ encontrado.
+    e devolve o theta encontrado.
     """
     alpha = np.asarray(alpha, dtype=float)
     xD = np.asarray(xD, dtype=float)
@@ -106,22 +97,76 @@ def underwood_RRmin(
 
 def gilliland_N(Nmin: float, RR: float, RR_min: float) -> float:
     """
-    Correlação de Gilliland (forma de Eduljee):
+    Correlação de Gilliland:
 
       X = (R - R_min) / (R + 1)
       Y = 0.75 * (1 - X**0.5668)
       Y = (N - Nmin) / (N + 1)
 
-    Retorna N (número de estágios teóricos para RR escolhido).
+    Retorna N 
     """
     Nmin = float(Nmin)
     RR = float(RR)
     RR_min = float(RR_min)
 
     X = (RR - RR_min) / (RR + 1.0)
-    X = max(1e-6, min(0.999999, X))  # evita problemas numéricos
+    X = max(1e-6, min(0.999999, X))  
 
     Y = 0.75 * (1.0 - X**0.5668)
 
     N = (Nmin + Y) / (1.0 - Y)
     return N
+
+
+
+def fenske_NR_NS_min(
+    xD,
+    xB,
+    zF,
+    i_LK: int,
+    i_HK: int,
+    alpha,
+):
+    """
+    Calcula os estágios mínimos acima (NR_min) e abaixo (NS_min) da carga
+    usando a forma segmentada da Fenske para LK/HK.
+
+    """
+    xD = np.asarray(xD, dtype=float)
+    xB = np.asarray(xB, dtype=float)
+    zF = np.asarray(zF, dtype=float)
+    alpha = np.asarray(alpha, dtype=float)
+
+    alpha_LKHK = alpha[i_LK] / alpha[i_HK]
+
+    ratio_D = xD[i_LK] / xD[i_HK]
+    ratio_F = zF[i_LK] / zF[i_HK]
+    ratio_B = xB[i_LK] / xB[i_HK]
+
+    NR_min = np.log((ratio_D / ratio_F)) / np.log(alpha_LKHK)
+    NS_min = np.log((ratio_F / ratio_B)) / np.log(alpha_LKHK)
+
+    return float(NR_min), float(NS_min)
+
+
+def calcular_prato_otimo(
+    Nmin: float,
+    Nteo: float,
+    N_real: float,
+    NR_min: float,
+    NS_min: float,
+):
+
+    f = Nteo / Nmin
+
+    NR_op = f * NR_min
+    NS_op = f * NS_min
+
+    # prato de alimentação em estágios teóricos (contando do topo)
+    j_feed_teo = NR_op + 1.0
+
+    fator_real = N_real / Nteo
+    NR_real = NR_op * fator_real
+    j_feed_real = NR_real + 1.0
+
+    return NR_op, NS_op, j_feed_teo, j_feed_real

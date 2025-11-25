@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -6,7 +5,7 @@ from typing import List, Sequence
 
 import numpy as np
 
-from componentes import Componente  # garante que estamos usando a mesma classe
+from componentes import Componente  
 
 
 R_GAS = 8.314  # J/mol/K
@@ -17,7 +16,6 @@ def massa_molar_media(x: Sequence[float], comps: List[Componente]) -> float:
     Calcula a massa molar média (kg/kmol) usando as composições x
     e as massas molares dos componentes.
 
-    Se MM não estiver preenchida no CSV, usa valores típicos para n-C5..n-C10.
     """
     x_arr = np.asarray(x, dtype=float)
     mm = []
@@ -25,7 +23,7 @@ def massa_molar_media(x: Sequence[float], comps: List[Componente]) -> float:
         if c.MM is not None and not np.isnan(c.MM):
             MM = float(c.MM)
         else:
-            # fallback por nome (caso você não tenha preenchido o CSV ainda)
+            
             nome = c.nome.lower()
             if "pentano" in nome:
                 MM = 72.15
@@ -65,7 +63,7 @@ class TrayColumnSizing:
     N_pratos: int
     H_ativa: float     # m
     H_total: float     # m
-    diametro: float    # m (adotado)
+    diametro: float    # m 
     sec_topo: SecaoPratos
     sec_fundo: SecaoPratos
 
@@ -84,25 +82,24 @@ def dimensionar_secao(
     C_capacidade: float = 0.15,
 ) -> SecaoPratos:
     """
-    Dimensiona uma seção (topo ou fundo) da coluna para pratos válvulados
-    usando uma correlação simplificada de inundação.
+    Dimensiona uma seção do topo ou fundo da coluna para pratos válvulados
     """
-    # 1) Propriedades médias
+ 
     MW_vap = massa_molar_media(x_vap, comps)  # kg/kmol
     P_Pa = P_atm * 101325.0
     rho_vap = P_Pa * (MW_vap / 1000.0) / (R_GAS * T_K)  # gás ideal
     rho_liq = rho_L_assumida
 
-    # 2) Velocidade de inundação (forma simplificada)
+ 
     u_flood = C_capacidade * np.sqrt((rho_liq - rho_vap) / rho_vap)
     u_op = frac_flood * u_flood
 
-    # 3) Vazão volumétrica de vapor
+
     m_dot_vap_h = V_kmol_h * MW_vap        # kg/h
     m_dot_vap_s = m_dot_vap_h / 3600.0     # kg/s
     V_vol = m_dot_vap_s / rho_vap          # m3/s
 
-    # 4) Área e diâmetro
+
     A_ativa = V_vol / u_op
     A_total = A_ativa / frac_area_ativa
     D = np.sqrt(4.0 * A_total / np.pi)
@@ -124,10 +121,10 @@ def dimensionar_secao(
 
 def altura_coluna(N_pratos: int, espacamento: float = 0.5, altura_extra: float = 4.0) -> tuple[float, float]:
     """
-    Calcula a altura ativa e a altura total da coluna de pratos.
+    calcula a altura ativa e a altura total da coluna de pratos.
 
-    espacamento: distância vertical entre pratos (m)
-    altura_extra: folgas adicionais (topo, fundo, zonas de separação) (m)
+    espacamento: distância vertical entre pratos m
+    altura_extra: folgas adicionais m
     """
     H_ativa = (N_pratos - 1) * espacamento
     H_total = H_ativa + altura_extra
@@ -144,26 +141,22 @@ def dimensionar_coluna_pratos(
     P_atm: float = 2.0,
 ) -> TrayColumnSizing:
     """
-    Dimensiona a coluna de pratos válvulados (diâmetro e altura) a partir:
+    dimensionar a coluna de pratos válvulados (diâmetro e altura) a partir:
 
-      - N_pratos (real, da Etapa 5)
-      - F, q_liq, spec (D, xD, xB, zF)
-      - RR (refluxo de operação)
-      - comps (para MM)
+      - N_pratos real
+      - F, q_liq,D, xD, xB, zF
+      - RR refluxo de operação
 
-    Usa constante molar overflow para obter L e V nas seções.
     """
     D_total = spec.D
     F_total = F
 
-    # 1) Fluxos internos (retificador e depurador)
     L_R = RR * D_total
     V_R = (RR + 1.0) * D_total
 
     L_S = L_R + q_liq * F_total
     V_S = V_R + (1.0 - q_liq) * F_total
 
-    # 2) Dimensionar seções topo e fundo
     sec_topo = dimensionar_secao(
         "topo",
         L_kmol_h=L_R,
@@ -171,8 +164,8 @@ def dimensionar_coluna_pratos(
         x_vap=spec.xD,
         comps=comps,
         P_atm=P_atm,
-        T_K=370.0,        # suposição: ~370 K no topo
-        rho_L_assumida=650.0,  # suposição
+        T_K=370.0,        # supondo 370 K no topo
+        rho_L_assumida=650.0,  # supondo
     )
 
     sec_fundo = dimensionar_secao(
@@ -182,14 +175,14 @@ def dimensionar_coluna_pratos(
         x_vap=spec.xB,
         comps=comps,
         P_atm=P_atm,
-        T_K=430.0,        # suposição: ~430 K no fundo
-        rho_L_assumida=700.0,  # suposição
+        T_K=430.0,        # supondo 430 K no fundo
+        rho_L_assumida=700.0,  # supondo
     )
 
-    # 3) Diâmetro da coluna = maior diâmetro entre as seções
+
     D_coluna = max(sec_topo.D, sec_fundo.D)
 
-    # 4) Altura
+
     H_ativa, H_total = altura_coluna(N_pratos)
 
     return TrayColumnSizing(
